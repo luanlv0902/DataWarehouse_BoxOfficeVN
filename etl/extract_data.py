@@ -1,3 +1,6 @@
+# NOTE CÀI ĐẶT THƯ VIỆN CẦN THIẾT TRONG FILE: 
+# pip install selenium webdriver-manager pandas beautifulsoup4
+
 import os
 import re
 import requests
