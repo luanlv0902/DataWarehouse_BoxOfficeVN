@@ -1,5 +1,5 @@
-# NOTE CÀI ĐẶT THƯ VIỆN CẦN THIẾT TRONG FILE: 
-# pip install selenium webdriver-manager pandas beautifulsoup4
+# NOTE: CÀI ĐẶT THƯ VIỆN CẦN THIẾT
+# pip install selenium webdriver-manager pandas beautifulsoup4 mysql-connector-python
 
 import os
 import re
@@ -13,10 +13,11 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
 import time
+import mysql.connector
 
 # === 1. KHỞI ĐỘNG QUY TRÌNH ===
 os.makedirs("logs", exist_ok=True)
-log_file = f"logs/etl_extract_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
+log_file = f"logs/extract/etl_extract_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
 
 logging.basicConfig(
     filename=log_file,
@@ -93,10 +94,52 @@ except Exception as e:
     logging.error(f"Lỗi khi trích xuất dữ liệu: {e}", exc_info=True)
     raise SystemExit("HTML parsing error")
 
-# === LƯU DỮ LIỆU VÀO RAW ===
+# === 5. LƯU DỮ LIỆU VÀO RAW (STAGING) ===
 today_str = date.today().strftime("%d%m%Y")
 os.makedirs("data/raw", exist_ok=True)
 raw_path = f"data/raw/boxoffice_{today_str}.csv"
 pd.DataFrame(rows).to_csv(raw_path, index=False, encoding="utf-8-sig")
 logging.info(f"Dữ liệu đã lưu: {os.path.abspath(raw_path)}")
 
+# === 6. LOAD LOG VÀO DATABASE db_control.etl_log ===
+try:
+    logging.info("Đang nạp log vào MySQL database...")
+
+    conn = mysql.connector.connect(
+        host="localhost",
+        user="root",
+        password="",
+        database="db_control",
+        port=3306
+    )
+    cursor = conn.cursor()
+
+    # Tạo bảng log nếu chưa có
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS etl_log (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        log_time DATETIME,
+        log_level VARCHAR(10),
+        message TEXT,
+        source_file VARCHAR(255),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+    """)
+
+    with open(log_file, "r", encoding="utf-8") as f:
+        for line in f:
+            parts = line.strip().split(" - ", 2)
+            if len(parts) == 3:
+                log_time, log_level, message = parts
+                log_time = log_time.split(",")[0]  # bỏ phần mili giây
+                cursor.execute("""
+                    INSERT INTO etl_log (log_time, log_level, message, source_file)
+                    VALUES (%s, %s, %s, %s)
+                """, (log_time, log_level, message, os.path.basename(log_file)))
+
+    conn.commit()
+    conn.close()
+    logging.info("Đã nạp log vào bảng db_control.etl_log thành công.")
+
+except Exception as e:
+    logging.error(f"Lỗi khi nạp log vào database: {e}", exc_info=True)
