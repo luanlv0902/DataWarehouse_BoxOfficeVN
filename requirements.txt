@@ -1,6 +1,7 @@
 selenium
 webdriver-manager
 pandas
+pymysql
 beautifulsoup4
 requests
 sqlalchemy

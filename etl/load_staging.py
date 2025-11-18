@@ -26,10 +26,10 @@ try:
     DB_CONTROL_CONFIG = mysql_base.copy()
     DB_CONTROL_CONFIG['database'] = config['databases']['control']
 
-    print("✅ Đã load cấu hình từ config.json")
+    print("Đã load cấu hình từ config.json")
 
 except Exception as e:
-    print(f"❌ Lỗi đọc file config.json: {e}")
+    print(f"Lỗi đọc file config.json: {e}")
     exit()
 
 # ==============================================================================
