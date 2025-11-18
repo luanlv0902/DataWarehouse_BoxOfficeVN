@@ -1,0 +1,4 @@
+2025-11-18 21:22:05,273 - INFO - ------- BẮT ĐẦU LOAD STAGING (RAW) -------
+2025-11-18 21:22:05,274 - INFO - Đang xử lý file: data/raw\boxoffice_10112025.csv
+2025-11-18 21:22:05,556 - INFO - Đã nạp thành công 31 dòng vào stg_boxoffice_raw
+2025-11-18 21:22:05,580 - INFO - Hoan tat quy trinh.
