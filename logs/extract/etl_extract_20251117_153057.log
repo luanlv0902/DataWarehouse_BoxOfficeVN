@@ -1,0 +1,14 @@
+2025-11-17 15:30:57,294 - INFO - BẮT ĐẦU QUY TRÌNH ETL DỮ LIỆU BOXOFFICEVIETNAM
+2025-11-17 15:30:57,295 - INFO - URL hợp lệ: https://boxofficevietnam.com/
+2025-11-17 15:30:57,295 - INFO - Đang khởi tạo trình duyệt Chrome (headless)...
+2025-11-17 15:30:57,295 - INFO - ====== WebDriver manager ======
+2025-11-17 15:30:58,342 - INFO - Get LATEST chromedriver version for google-chrome
+2025-11-17 15:30:58,830 - INFO - Get LATEST chromedriver version for google-chrome
+2025-11-17 15:30:59,336 - INFO - Driver [C:\Users\Asus\.wdm\drivers\chromedriver\win64\142.0.7444.162\chromedriver-win32/chromedriver.exe] found in cache
+2025-11-17 15:31:00,460 - INFO - Đang truy cập trang web...
+2025-11-17 15:31:11,836 - INFO - Đã tải thành công trang web.
+2025-11-17 15:31:11,836 - INFO - Bắt đầu trích xuất dữ liệu (Extract)...
+2025-11-17 15:31:11,920 - INFO - Trích xuất thành công 39 dòng dữ liệu.
+2025-11-17 15:31:11,931 - INFO - Dữ liệu đã lưu: D:\BoxOfficeDW\BoxOfficeDW\data\raw\boxoffice_17112025.csv
+2025-11-17 15:31:11,931 - INFO - Đang nạp log vào MySQL database...
+2025-11-17 15:31:11,973 - INFO - Đã nạp log vào bảng db_control.etl_log thành công.

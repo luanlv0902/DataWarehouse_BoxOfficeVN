@@ -1,0 +1,14 @@
+{
+  "mysql": {
+    "host": "localhost",
+    "user": "root",
+    "password": "",
+    "port": 3306
+  },
+  "databases": {
+    "staging": "db_staging",
+    "warehouse": "db_warehouse",
+    "datamart": "db_datamart",
+    "control": "db_control"
+  }
+}

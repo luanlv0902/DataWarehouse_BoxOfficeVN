@@ -1,0 +1,9 @@
+2025-11-17 15:04:07,676 - INFO - BẮT ĐẦU QUY TRÌNH TRANSFORM DỮ LIỆU BOXOFFICEVIETNAM
+2025-11-17 15:04:07,677 - INFO - Đã tìm thấy tệp tin raw mới nhất: data/raw\boxoffice_17112025.csv
+2025-11-17 15:04:07,699 - INFO - Đã đọc thành công 39 dòng dữ liệu từ data/raw\boxoffice_17112025.csv
+2025-11-17 15:04:07,700 - INFO - Bắt đầu chuyển đổi dữ liệu (Transform)...
+2025-11-17 15:04:07,709 - INFO - Đã chuyển đổi dữ liệu thành công.
+2025-11-17 15:04:07,712 - INFO - Dữ liệu đã chuyển đổi được lưu tại: D:\BoxOfficeDW\BoxOfficeDW\data\etl\boxoffice_transformed_17112025.csv
+2025-11-17 15:04:07,712 - INFO - Đang nạp log transform vào MySQL database...
+2025-11-17 15:04:07,798 - INFO - Đã nạp log transform vào bảng db_control.etl_log thành công.
+2025-11-17 15:04:07,799 - INFO - KẾT THÚC QUY TRÌNH TRANSFORM DỮ LIỆU BOXOFFICEVIETNAM

@@ -1,0 +1,37 @@
+2025-11-18 12:15:18,202 - INFO - BẮT ĐẦU QUY TRÌNH TRANSFORM DỮ LIỆU BOXOFFICEVIETNAM
+2025-11-18 12:15:18,203 - INFO - Đã tìm thấy tệp tin raw mới nhất: data/raw\boxoffice_17112025.csv
+2025-11-18 12:15:18,210 - INFO - Đã đọc thành công 39 dòng dữ liệu từ data/raw\boxoffice_17112025.csv
+2025-11-18 12:15:18,210 - INFO - Bắt đầu chuyển đổi dữ liệu (Transform)...
+2025-11-18 12:15:18,218 - INFO - Đã chuyển đổi dữ liệu thành công.
+2025-11-18 12:15:18,221 - INFO - Dữ liệu đã chuyển đổi được lưu tại: D:\BoxOfficeDW\BoxOfficeDW\data\etl\boxoffice_transformed_18112025.csv
+2025-11-18 12:15:18,221 - INFO - Đang nạp log transform vào MySQL database...
+2025-11-18 12:15:22,353 - ERROR - Lỗi khi nạp log transform vào database: 2003 (HY000): Can't connect to MySQL server on 'localhost:3306' (10061)
+Traceback (most recent call last):
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python313\Lib\site-packages\mysql\connector\connection_cext.py", line 354, in _open_connection
+    self._cmysql.connect(**cnx_kwargs)
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^
+_mysql_connector.MySQLInterfaceError: Can't connect to MySQL server on 'localhost:3306' (10061)
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "d:\BoxOfficeDW\BoxOfficeDW\etl\transform_data.py", line 149, in <module>
+    conn = mysql.connector.connect(
+        host="localhost",
+    ...<3 lines>...
+        port=3306
+    )
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python313\Lib\site-packages\mysql\connector\pooling.py", line 322, in connect
+    return CMySQLConnection(*args, **kwargs)
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python313\Lib\site-packages\mysql\connector\connection_cext.py", line 142, in __init__
+    self.connect(**kwargs)
+    ~~~~~~~~~~~~^^^^^^^^^^
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python313\Lib\site-packages\mysql\connector\abstracts.py", line 1604, in connect
+    self._open_connection()
+    ~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\Asus\AppData\Local\Programs\Python\Python313\Lib\site-packages\mysql\connector\connection_cext.py", line 360, in _open_connection
+    raise get_mysql_exception(
+        err.errno, msg=err.msg, sqlstate=err.sqlstate
+    ) from err
+mysql.connector.errors.DatabaseError: 2003 (HY000): Can't connect to MySQL server on 'localhost:3306' (10061)
+2025-11-18 12:15:22,376 - INFO - KẾT THÚC QUY TRÌNH TRANSFORM DỮ LIỆU BOXOFFICEVIETNAM
