@@ -7,10 +7,9 @@ import mysql.connector
 from datetime import datetime
 
 # ==============================================================================
-# [BƯỚC 1] LOAD CẤU HÌNH TỪ FILE JSON
+# [2.1] LOAD CẤU HÌNH TỪ FILE JSON
 # ==============================================================================
 try:
-    # Giả định file config.json nằm ở thư mục gốc (ngang hàng với thư mục etl)
     # Nếu file chạy từ gốc dự án, đường dẫn là 'config.json'
     config_path = 'config/db_config.json' 
     
@@ -34,7 +33,7 @@ except Exception as e:
     exit()
 
 # ==============================================================================
-# [BƯỚC 2] THIẾT LẬP LOGGING
+# [2.2] THIẾT LẬP LOGGING
 # ==============================================================================
 os.makedirs("logs/staging", exist_ok=True)
 log_file = f"logs/staging/load_staging_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
@@ -59,21 +58,22 @@ def get_latest_raw_file():
     return max(files, key=os.path.getctime)
 
 # ==============================================================================
-# [BƯỚC 3] HÀM CHÍNH: LOAD DATA VÀO STAGING (RAW TABLE)
+# [2.3] HÀM CHÍNH: LOAD DATA VÀO STAGING (RAW TABLE)
 # ==============================================================================
 def load_raw_to_staging():
     logging.info("------- BẮT ĐẦU LOAD STAGING (RAW) -------")
 
-    # [3.1] Tìm file CSV Raw
+    # [2.4] Tìm file CSV Raw
     latest_file = get_latest_raw_file()
     if not latest_file:
+        # [2.5.1] Ghi log lỗi và Dừng
         logging.error("Không tìm thấy file CSV nào trong data/raw")
         return
 
     logging.info(f"Đang xử lý file: {latest_file}")
 
     try:
-        # [3.2] Đọc file CSV
+        # [2.5.2] Đọc file CSV
         df = pd.read_csv(latest_file)
         
         # Lấy ngày cào từ tên file (boxoffice_18112025.csv) để làm scraped_date
@@ -84,15 +84,15 @@ def load_raw_to_staging():
         except:
             scraped_date = datetime.now().strftime("%Y-%m-%d")
 
-        # [3.3] Kết nối DB Staging
+        # [2.6] Kết nối DB Staging
         conn = mysql.connector.connect(**DB_STAGING_CONFIG)
         cursor = conn.cursor()
 
-        # [3.4] Xóa dữ liệu cũ (Truncate) để nạp mới
+        # [2.7] Xóa dữ liệu cũ (Truncate) để nạp mới
         # Lưu ý: Tùy chiến lược, có thể bạn muốn giữ lịch sử thì bỏ dòng này
         cursor.execute("TRUNCATE TABLE stg_boxoffice_raw")
 
-        # [3.5] Chuẩn bị dữ liệu Insert
+        # [2.8] Chuẩn bị dữ liệu Insert
         sql = """
             INSERT INTO stg_boxoffice_raw 
             (film_name, revenue_raw, tickets_raw, showtimes_raw, scraped_date, source) 
@@ -112,8 +112,8 @@ def load_raw_to_staging():
                 "BoxOfficeVietnam"
             ))
 
-        # [3.6] Thực thi Insert
         cursor.executemany(sql, data_to_insert)
+        # [2.9] Commit & Đóng kết nối Staging
         conn.commit()
         
         logging.info(f"Đã nạp thành công {cursor.rowcount} dòng vào stg_boxoffice_raw")
@@ -129,10 +129,10 @@ def load_raw_to_staging():
 # ==============================================================================
 if __name__ == "__main__":
     
-    # [BƯỚC 4] Chạy quy trình Load
+    # [2.3] Chạy quy trình Load
     load_raw_to_staging()
 
-    # [BƯỚC 5] Đồng bộ Log vào Database Control
+    # [2.10] Đồng bộ Log vào Database Control
     try:
         print("Dang nap log vao DB Control...")
         conn = mysql.connector.connect(**DB_CONTROL_CONFIG)
@@ -150,8 +150,10 @@ if __name__ == "__main__":
             )
         """)
 
+        # [2.11] Mở file Log -> Đọc từng dòng
         with open(log_file, "r", encoding="utf-8") as f:
             for line in f:
+                 # [2.12] Tách dòng log & Insert vào DB
                 parts = line.strip().split(" - ", 2)
                 if len(parts) == 3:
                     log_time_str, log_level, message = parts
@@ -161,7 +163,10 @@ if __name__ == "__main__":
                     cursor.execute("""
                         INSERT INTO etl_log (log_time, log_level, message, source_file)
                         VALUES (%s, %s, %s, %s)
+      
                     """, (log_time, log_level, message, os.path.basename(log_file)))
+ 
+        # [2.13] Commit & Kết thúc chương trình
 
         conn.commit()
         cursor.close()
