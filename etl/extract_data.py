@@ -1,88 +1,59 @@
+# etl/extract_data.py
 import os
 import re
-import requests
-from bs4 import BeautifulSoup
-import pandas as pd
 import logging
-from datetime import date, datetime
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
 import time
-import mysql.connector
+import pandas as pd
+from datetime import datetime, date
+from bs4 import BeautifulSoup
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.chrome.options import Options
+from webdriver_manager.chrome import ChromeDriverManager
 
-# === 1. SETUP LOGGING ===
+import sys
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.insert(0, project_root)
+
+from utils.db_connection import get_db_config
+from utils.log_to_db import push_log_file_to_db
+
+# logging
 os.makedirs("logs/extract", exist_ok=True)
-os.makedirs("data/raw", exist_ok=True)
-
-log_file = f"logs/extract/etl_extract_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
-
-logging.basicConfig(
-    filename=log_file,
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s",
-    encoding="utf-8"
-)
-
-console = logging.StreamHandler()
-console.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s - %(message)s"))
-logging.getLogger().addHandler(console)
-
-logging.info("BẮT ĐẦU QUY TRÌNH ETL DỮ LIỆU BOXOFFICEVIETNAM")
+log_file = f"logs/extract/extract_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
+logging.basicConfig(filename=log_file, level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s", encoding="utf-8")
+logging.getLogger().addHandler(logging.StreamHandler())
 
 URL = "https://boxofficevietnam.com/"
 
-# === 2. KIỂM TRA URL ===
-def is_valid_url(url: str) -> bool:
-    pattern = r'^https?:\/\/[^\s\/$.?#].[^\s]*$'
-    return re.match(pattern, url) is not None
-
-if not is_valid_url(URL):
-    logging.error("URL không hợp lệ.")
-    raise SystemExit("URL không hợp lệ.")
-logging.info(f"URL hợp lệ: {URL}")
-
-# === 3. KHỞI ĐỘNG SELENIUM ===
-try:
-    logging.info("Khởi tạo Chrome headless...")
-
+def get_driver():
     options = Options()
+    # headless new mode is stable for modern chrome
     options.add_argument("--headless=new")  
     options.add_argument("--disable-gpu")
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-blink-features=AutomationControlled")
 
     driver = webdriver.Chrome(options=options)
+    return driver
 
-    logging.info("Đang truy cập trang web...")
-    driver.get(URL)
+def scrape_to_csv():
+    logging.info("Start extract")
+    try:
+        driver = get_driver()
+        driver.get(URL)
+        time.sleep(6)
+        html = driver.page_source
+        driver.quit()
+    except Exception as e:
+        logging.exception("Failed to load page")
+        raise
 
-    # Chờ bảng dữ liệu xuất hiện
-    wait = WebDriverWait(driver, 15)
-    wait.until(EC.presence_of_element_located((By.TAG_NAME, "table")))
-
-    html = driver.page_source
-    driver.quit()
-
-    logging.info("Đã tải thành công trang web.")
-
-except Exception as e:
-    logging.error(f"Request failed – Website unreachable: {e}", exc_info=True)
-    raise SystemExit("Website unreachable")
-
-# === 4. EXTRACT DATA ===
-logging.info("Đang trích xuất dữ liệu...")
-
-try:
     soup = BeautifulSoup(html, "html.parser")
     table = soup.find("table")
-
     if not table:
-        logging.error("Không tìm thấy bảng dữ liệu.")
-        raise ValueError("HTML không chứa bảng dữ liệu.")
+        logging.error("No table found on page")
+        raise SystemExit("No table found")
 
     rows = []
     for tr in table.select("tbody tr"):
@@ -94,63 +65,27 @@ try:
                 "Vé": cols[2],
                 "Suất chiếu": cols[3]
             })
-
     if not rows:
-        logging.error("Không có dữ liệu trong bảng.")
-        raise ValueError("Bảng dữ liệu rỗng.")
+        logging.error("No rows extracted")
+        raise SystemExit("No rows")
 
-    logging.info(f"Trích xuất được {len(rows)} dòng.")
+    os.makedirs("data/raw", exist_ok=True)
+    today_str = date.today().strftime("%d%m%Y")
+    raw_path = f"data/raw/boxoffice_{today_str}.csv"
+    pd.DataFrame(rows).to_csv(raw_path, index=False, encoding="utf-8-sig")
+    logging.info(f"Wrote raw CSV: {raw_path}")
+    return raw_path
 
-except Exception as e:
-    logging.error(f"Lỗi Extract: {e}", exc_info=True)
-    raise SystemExit("HTML parsing error")
+if __name__ == "__main__":
+    try:
+        scrape_to_csv()
+    finally:
+        try:
+            # ghi log vào db_control
+            control_cfg = get_db_config("control")
+            push_log_file_to_db(log_file, control_cfg)
+            print("Đã ghi log vào db_control.")
+        except Exception:
+            logging.exception("Failed to push log to db_control")
+            print("Lỗi ghi log vào db_control.")
 
-# === 5. LƯU DỮ LIỆU RAW ===
-today_str = date.today().strftime("%d%m%Y")
-raw_path = f"data/raw/boxoffice_{today_str}.csv"
-
-pd.DataFrame(rows).to_csv(raw_path, index=False, encoding="utf-8-sig")
-logging.info(f"Dữ liệu đã lưu vào: {os.path.abspath(raw_path)}")
-
-# === 6. LOAD LOG VÀO DATABASE ===
-try:
-    logging.info("Đang ghi log vào MySQL...")
-
-    conn = mysql.connector.connect(
-        host="localhost",
-        user="root",
-        password="",
-        database="db_control",
-        port=3306
-    )
-    cursor = conn.cursor()
-
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS etl_log (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        log_time DATETIME,
-        log_level VARCHAR(10),
-        message TEXT,
-        source_file VARCHAR(255),
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )
-    """)
-
-    with open(log_file, "r", encoding="utf-8") as f:
-        for line in f:
-            parts = line.strip().split(" - ", 2)
-            if len(parts) == 3:
-                log_time, log_level, message = parts
-                log_time = log_time.split(",")[0]  # bỏ ms
-                cursor.execute("""
-                    INSERT INTO etl_log (log_time, log_level, message, source_file)
-                    VALUES (%s, %s, %s, %s)
-                """, (log_time, log_level, message, os.path.basename(log_file)))
-
-    conn.commit()
-    conn.close()
-
-    logging.info("Ghi log vào MySQL thành công.")
-
-except Exception as e:
-    logging.error(f"Lỗi ghi log vào MySQL: {e}", exc_info=True)
