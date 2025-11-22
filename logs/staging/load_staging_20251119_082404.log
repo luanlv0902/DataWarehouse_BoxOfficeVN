@@ -1,0 +1,7 @@
+2025-11-19 08:24:04,420 - INFO - ------- BẮT ĐẦU LOAD STAGING (RAW) -------
+2025-11-19 08:24:04,422 - INFO - Đang xử lý file: data/raw\boxoffice_19112025.csv
+2025-11-19 08:24:04,519 - INFO - package: mysql.connector.plugins
+2025-11-19 08:24:04,519 - INFO - plugin_name: mysql_native_password
+2025-11-19 08:24:04,521 - INFO - AUTHENTICATION_PLUGIN_CLASS: MySQLNativePasswordAuthPlugin
+2025-11-19 08:24:04,563 - INFO - Đã nạp thành công 39 dòng vào stg_boxoffice_raw
+2025-11-19 08:24:04,588 - INFO - Hoan tat quy trinh.
