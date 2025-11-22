@@ -1,0 +1,8 @@
+2025-11-22 18:31:40,114 - INFO - Start load_to_datamart
+2025-11-22 18:31:40,115 - INFO - Start aggregate_for_datamart
+2025-11-22 18:31:40,303 - INFO - Daily revenue CSV saved: data/aggregate/dm_daily_revenue_22112025.csv
+2025-11-22 18:31:40,303 - INFO - Top movies CSV saved: data/aggregate/dm_top_movies_22112025.csv
+2025-11-22 18:31:40,325 - INFO - Inserted 39 rows into dm_daily_revenue
+2025-11-22 18:31:40,334 - INFO - Inserted 39 rows into dm_top_movies
+2025-11-22 18:31:40,334 - INFO - Push datamart log to db_control
+2025-11-22 18:31:40,334 - WARNING - Log file not found for push: logs/datamart\load_datamart_20251122_183140.log

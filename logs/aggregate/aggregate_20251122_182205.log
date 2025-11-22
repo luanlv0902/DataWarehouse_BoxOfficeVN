@@ -1,0 +1,3 @@
+2025-11-22 18:22:05,468 - INFO - Start aggregate_for_datamart
+2025-11-22 18:22:05,651 - INFO - Daily revenue CSV saved: data/aggregate/dm_daily_revenue_22112025.csv
+2025-11-22 18:22:05,652 - INFO - Top movies CSV saved: data/aggregate/dm_top_movies_22112025.csv

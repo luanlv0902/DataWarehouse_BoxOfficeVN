@@ -88,4 +88,3 @@ if __name__ == "__main__":
         except Exception:
             logging.exception("Failed to push log to db_control")
             print("Lỗi ghi log vào db_control.")
-

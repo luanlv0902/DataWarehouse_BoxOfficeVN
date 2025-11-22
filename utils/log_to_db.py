@@ -1,4 +1,4 @@
-# etl/utils/log_to_db.py
+# utils/log_to_db.py
 import os
 import mysql.connector
 from datetime import datetime
