@@ -1,0 +1,7 @@
+2025-11-22 21:56:05,610 - INFO - Start load_to_datamart
+2025-11-22 21:56:05,613 - INFO - Start aggregate_for_datamart
+2025-11-22 21:56:05,764 - INFO - Daily revenue CSV saved: data/aggregate\dm_daily_revenue_22112025.csv
+2025-11-22 21:56:05,764 - INFO - Top movies CSV saved: data/aggregate\dm_top_movies_22112025.csv
+2025-11-22 21:56:05,780 - INFO - Inserted 39 rows into dm_daily_revenue
+2025-11-22 21:56:05,783 - INFO - Inserted 39 rows into dm_top_movies
+2025-11-22 21:56:05,794 - INFO - Pushed log to db_control successfully

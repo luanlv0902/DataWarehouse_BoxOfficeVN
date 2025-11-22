@@ -1,25 +1,29 @@
-
+# etl/load_staging.py
 import sys
 import os
 import glob
-import json
 import logging
 import pandas as pd
 import mysql.connector
 from datetime import datetime
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.insert(0, project_root)
-from utils.db_connection import get_db_config
+
+from utils.db_connection import get_db_config, get_etl_config_from_db
 from utils.log_to_db import push_log_file_to_db
 
-# logging
-os.makedirs("logs/staging", exist_ok=True)
-log_file = f"logs/staging/load_staging_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
-logging.basicConfig(filename=log_file, level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s", encoding="utf-8")
+# Logging
+log_dir = "logs/staging"
+os.makedirs(log_dir, exist_ok=True)
+log_file = f"{log_dir}/load_staging_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
+logging.basicConfig(filename=log_file, level=logging.INFO,
+                    format="%(asctime)s - %(levelname)s - %(message)s", encoding="utf-8")
 logging.getLogger().addHandler(logging.StreamHandler())
 
 def get_latest_raw_file():
-    files = glob.glob("data/raw/boxoffice_*.csv")
+    # Lấy thư mục raw từ DB
+    raw_dir = get_etl_config_from_db("raw_data_path") or "data/raw"
+    files = glob.glob(os.path.join(raw_dir, "boxoffice_*.csv"))
     return max(files, key=os.path.getctime) if files else None
 
 def run_staging_load():
@@ -50,26 +54,20 @@ def run_staging_load():
         INSERT INTO stg_boxoffice_raw (film_name, revenue_raw, tickets_raw, showtimes_raw, scraped_date)
         VALUES (%s,%s,%s,%s,%s)
     """
-    data = []
-    for _, r in df.iterrows():
-        data.append((
-            r.get("Tên phim"),
-            r.get("Doanh thu"),
-            r.get("Vé"),
-            r.get("Suất chiếu"),
-            scraped_date
-        ))
+    data = [(r.get("Tên phim"), r.get("Doanh thu"), r.get("Vé"), r.get("Suất chiếu"), scraped_date)
+            for _, r in df.iterrows()]
     if data:
         cur.executemany(insert_sql, data)
         conn.commit()
         logging.info(f"Inserted {cur.rowcount} rows into stg_boxoffice_raw")
+
     cur.close()
     conn.close()
 
-    # push logs into db_config
+    # push logs vào db_control
     try:
         push_log_file_to_db(log_file, get_db_config("control"))
-    except Exception as e:
+    except Exception:
         logging.exception("Failed to push logs to DB control")
 
 if __name__ == "__main__":

@@ -1,3 +1,0 @@
-2025-11-22 18:04:49,583 - INFO - Start load_staging
-2025-11-22 18:04:49,584 - INFO - Loading raw file: data/raw\boxoffice_19112025.csv
-2025-11-22 18:04:49,930 - INFO - Inserted 39 rows into stg_boxoffice_raw
