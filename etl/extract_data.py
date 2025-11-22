@@ -15,21 +15,22 @@ import sys
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.insert(0, project_root)
 
-from utils.db_connection import get_db_config
+from utils.db_connection import get_db_config, get_etl_config_from_db
 from utils.log_to_db import push_log_file_to_db
 
-# logging
-os.makedirs("logs/extract", exist_ok=True)
-log_file = f"logs/extract/extract_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
-logging.basicConfig(filename=log_file, level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s", encoding="utf-8")
+# Logging
+log_dir = "logs/extract"
+os.makedirs(log_dir, exist_ok=True)
+log_file = f"{log_dir}/extract_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
+logging.basicConfig(filename=log_file, level=logging.INFO,
+                    format="%(asctime)s - %(levelname)s - %(message)s", encoding="utf-8")
 logging.getLogger().addHandler(logging.StreamHandler())
 
 URL = "https://boxofficevietnam.com/"
 
 def get_driver():
     options = Options()
-    # headless new mode is stable for modern chrome
-    options.add_argument("--headless=new")  
+    options.add_argument("--headless=new")
     options.add_argument("--disable-gpu")
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-blink-features=AutomationControlled")
@@ -69,9 +70,12 @@ def scrape_to_csv():
         logging.error("No rows extracted")
         raise SystemExit("No rows")
 
-    os.makedirs("data/raw", exist_ok=True)
+    # --- Lấy thư mục lưu trữ từ db_control ---
+    raw_dir = get_etl_config_from_db("raw_data_path") or "data/raw"
+    os.makedirs(raw_dir, exist_ok=True)
     today_str = date.today().strftime("%d%m%Y")
-    raw_path = f"data/raw/boxoffice_{today_str}.csv"
+    raw_path = os.path.join(raw_dir, f"boxoffice_{today_str}.csv")
+    
     pd.DataFrame(rows).to_csv(raw_path, index=False, encoding="utf-8-sig")
     logging.info(f"Wrote raw CSV: {raw_path}")
     return raw_path
@@ -81,7 +85,6 @@ if __name__ == "__main__":
         scrape_to_csv()
     finally:
         try:
-            # ghi log vào db_control
             control_cfg = get_db_config("control")
             push_log_file_to_db(log_file, control_cfg)
             print("Đã ghi log vào db_control.")

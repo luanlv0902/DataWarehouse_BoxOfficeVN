@@ -7,12 +7,14 @@ import mysql.connector
 from datetime import datetime
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.insert(0, project_root)
-from utils.db_connection import get_db_config
+
+from utils.db_connection import get_db_config, get_etl_config_from_db
 from utils.log_to_db import push_log_file_to_db
 
 # Logging
-os.makedirs("logs/aggregate", exist_ok=True)
-log_file = f"logs/aggregate/aggregate_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
+log_dir = "logs/aggregate"
+os.makedirs(log_dir, exist_ok=True)
+log_file = f"{log_dir}/aggregate_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
 logging.basicConfig(filename=log_file, level=logging.INFO,
                     format="%(asctime)s - %(levelname)s - %(message)s", encoding="utf-8")
 logging.getLogger().addHandler(logging.StreamHandler())
@@ -24,7 +26,6 @@ def aggregate_for_datamart():
     cfg = get_db_config("warehouse")
     conn = mysql.connector.connect(**cfg)
     
-    # Load fact + dim data
     sql = """
     SELECT 
         f.revenue_id,
@@ -51,7 +52,7 @@ def aggregate_for_datamart():
         'showtimes': 'sum'
     })
     
-    # 2️⃣ Aggregate top movies (total revenue)
+    # 2️⃣ Aggregate top movies
     top_df = df.groupby(['movie_name'], as_index=False).agg({
         'revenue_vnd': 'sum',
         'tickets_sold': 'sum',
@@ -59,22 +60,26 @@ def aggregate_for_datamart():
     }).sort_values(by='revenue_vnd', ascending=False).reset_index(drop=True)
     top_df['ranking'] = top_df.index + 1
     
-    # Optional: save CSV backup
-    os.makedirs("data/aggregate", exist_ok=True)
+    # --- Lấy thư mục lưu trữ aggregate từ DB ---
+    aggregate_dir = get_etl_config_from_db("aggregate_data_path") or "data/aggregate"
+    os.makedirs(aggregate_dir, exist_ok=True)
+    
     today_str = datetime.today().strftime("%d%m%Y")
-    daily_path = f"data/aggregate/dm_daily_revenue_{today_str}.csv"
-    top_path = f"data/aggregate/dm_top_movies_{today_str}.csv"
+    daily_path = os.path.join(aggregate_dir, f"dm_daily_revenue_{today_str}.csv")
+    top_path = os.path.join(aggregate_dir, f"dm_top_movies_{today_str}.csv")
+    
     daily_df.to_csv(daily_path, index=False, encoding="utf-8-sig")
     top_df.to_csv(top_path, index=False, encoding="utf-8-sig")
+    
     logging.info(f"Daily revenue CSV saved: {daily_path}")
     logging.info(f"Top movies CSV saved: {top_path}")
     
-    # Push logs to control DB
+    # Push logs vào db_control
     try:
         push_log_file_to_db(log_file, get_db_config("control"))
     except Exception:
         logging.exception("Push log failed")
-
+    
     return daily_df, top_df
 
 if __name__ == "__main__":
