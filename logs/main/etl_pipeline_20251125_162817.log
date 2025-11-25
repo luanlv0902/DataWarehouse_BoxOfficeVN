@@ -1,0 +1,15 @@
+2025-11-25 16:28:17,806 - INFO - Starting full ETL pipeline
+2025-11-25 16:28:17,806 - INFO - Step 1: Extract data
+2025-11-25 16:28:29,898 - INFO - Extract finished: data/raw\boxoffice_25112025.csv
+2025-11-25 16:28:29,898 - INFO - Step 2: Load staging
+2025-11-25 16:28:29,946 - INFO - Staging load finished
+2025-11-25 16:28:29,947 - INFO - Step 3: Transform data
+2025-11-25 16:28:31,394 - INFO - Transform finished, 36 rows processed
+2025-11-25 16:28:31,394 - INFO - Step 4: Load warehouse
+2025-11-25 16:28:31,517 - INFO - Warehouse load finished
+2025-11-25 16:28:31,518 - INFO - Step 5: Aggregate data
+2025-11-25 16:28:31,544 - INFO - Aggregate finished: 36 daily rows, 36 top movie rows
+2025-11-25 16:28:31,545 - INFO - Step 6: Load datamart
+2025-11-25 16:28:31,596 - INFO - Datamart load finished
+2025-11-25 16:28:31,615 - INFO - Pushed main ETL log to db_control successfully
+2025-11-25 16:28:31,616 - INFO - === ETL pipeline finished ===

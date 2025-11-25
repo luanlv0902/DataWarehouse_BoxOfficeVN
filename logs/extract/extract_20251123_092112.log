@@ -1,0 +1,8 @@
+2025-11-23 09:21:12,179 - INFO - Start extract
+2025-11-23 09:21:16,152 - INFO - Đang lấy dữ liệu từ URL nguồn: https://boxofficevietnam.com/
+2025-11-23 09:21:29,258 - INFO - package: mysql.connector.plugins
+2025-11-23 09:21:29,259 - INFO - plugin_name: mysql_native_password
+2025-11-23 09:21:29,283 - INFO - AUTHENTICATION_PLUGIN_CLASS: MySQLNativePasswordAuthPlugin
+2025-11-23 09:21:29,336 - INFO - Wrote raw CSV: data/raw\boxoffice_23112025.csv
+2025-11-23 09:21:29,337 - INFO - Bắt đầu đẩy log file lên DB control...
+2025-11-23 09:21:29,360 - INFO - Đã đẩy log thành công lên DB control

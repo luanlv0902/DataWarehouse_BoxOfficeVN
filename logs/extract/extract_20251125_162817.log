@@ -1,0 +1,39 @@
+2025-11-25 16:28:17,771 - INFO - package: mysql.connector.plugins
+2025-11-25 16:28:17,774 - INFO - plugin_name: mysql_native_password
+2025-11-25 16:28:17,775 - INFO - AUTHENTICATION_PLUGIN_CLASS: MySQLNativePasswordAuthPlugin
+2025-11-25 16:28:17,806 - INFO - Starting full ETL pipeline
+2025-11-25 16:28:17,806 - INFO - Step 1: Extract data
+2025-11-25 16:28:17,807 - INFO - Start extract
+2025-11-25 16:28:19,633 - INFO - Đang lấy dữ liệu từ URL nguồn: https://boxofficevietnam.com/
+2025-11-25 16:28:29,897 - INFO - Wrote raw CSV: data/raw\boxoffice_25112025.csv
+2025-11-25 16:28:29,898 - INFO - Extract finished: data/raw\boxoffice_25112025.csv
+2025-11-25 16:28:29,898 - INFO - Step 2: Load staging
+2025-11-25 16:28:29,899 - INFO - Start load_staging
+2025-11-25 16:28:29,903 - INFO - Loading raw file: data/raw\boxoffice_25112025.csv
+2025-11-25 16:28:29,945 - INFO - Inserted 36 rows into stg_boxoffice_raw
+2025-11-25 16:28:29,946 - INFO - Staging load finished
+2025-11-25 16:28:29,947 - INFO - Step 3: Transform data
+2025-11-25 16:28:29,947 - INFO - Start transform
+2025-11-25 16:28:31,392 - INFO - Wrote cleaned CSV: data/cleaned\boxoffice_cleaned_25112025.csv
+2025-11-25 16:28:31,394 - INFO - Transform finished, 36 rows processed
+2025-11-25 16:28:31,394 - INFO - Step 4: Load warehouse
+2025-11-25 16:28:31,394 - INFO - Start load_warehouse
+2025-11-25 16:28:31,470 - INFO - dim_movie updated, total movies now: 36
+2025-11-25 16:28:31,498 - INFO - Inserted 36 rows into fact_revenue
+2025-11-25 16:28:31,517 - INFO - Warehouse load finished
+2025-11-25 16:28:31,518 - INFO - Step 5: Aggregate data
+2025-11-25 16:28:31,518 - INFO - Start aggregate_for_datamart
+2025-11-25 16:28:31,543 - INFO - Daily revenue CSV saved: data/aggregate\dm_daily_revenue_25112025.csv
+2025-11-25 16:28:31,543 - INFO - Top movies CSV saved: data/aggregate\dm_top_movies_25112025.csv
+2025-11-25 16:28:31,544 - INFO - Aggregate finished: 36 daily rows, 36 top movie rows
+2025-11-25 16:28:31,545 - INFO - Step 6: Load datamart
+2025-11-25 16:28:31,545 - INFO - Start load_to_datamart
+2025-11-25 16:28:31,548 - INFO - Start aggregate_for_datamart
+2025-11-25 16:28:31,566 - INFO - Daily revenue CSV saved: data/aggregate\dm_daily_revenue_25112025.csv
+2025-11-25 16:28:31,566 - INFO - Top movies CSV saved: data/aggregate\dm_top_movies_25112025.csv
+2025-11-25 16:28:31,573 - INFO - Inserted 36 rows into dm_daily_revenue
+2025-11-25 16:28:31,577 - INFO - Inserted 36 rows into dm_top_movies
+2025-11-25 16:28:31,595 - INFO - Pushed log to db_control successfully
+2025-11-25 16:28:31,596 - INFO - Datamart load finished
+2025-11-25 16:28:31,615 - INFO - Pushed main ETL log to db_control successfully
+2025-11-25 16:28:31,616 - INFO - === ETL pipeline finished ===
