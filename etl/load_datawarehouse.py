@@ -14,8 +14,10 @@ from utils.db_connection import get_db_config, get_etl_config_from_db
 from utils.log_to_db import push_log_file_to_db
 
 # --- Logging setup ---
+# 1. Lấy cấu hình đường dẫn log
 log_dir = get_etl_config_from_db("etl_log_path") or "logs/warehouse"
 os.makedirs(log_dir, exist_ok=True)
+# 2. Tạo file log
 log_file = os.path.join(log_dir, f"load_warehouse_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log")
 
 logger = logging.getLogger("load_warehouse")
@@ -28,12 +30,14 @@ file_handler.setFormatter(formatter)
 logger.addHandler(file_handler)
 logger.addHandler(logging.StreamHandler())
 
+# 3. Xác định file clean.csv mới nhất
 def get_latest_cleaned_csv():
     files = sorted([f for f in os.listdir("data/cleaned") if f.startswith("boxoffice_cleaned_")])
     return os.path.join("data/cleaned", files[-1]) if files else None
 
-def run_warehouse_load():
+def run_warehouse_load():   
     logger.info("Start load_warehouse")
+    # 4. Đọc dữ liệu đã chuẩn hóa
     csv_file = get_latest_cleaned_csv()
     if not csv_file or not os.path.exists(csv_file):
         logger.error("No cleaned CSV found")
@@ -44,12 +48,12 @@ def run_warehouse_load():
         logger.warning("Cleaned CSV empty")
         return
 
-    # --- Lấy config DB warehouse từ db_control ---
+    # 5. Kết nối data warehouse
     wh_cfg = get_db_config("warehouse")
     conn = mysql.connector.connect(**wh_cfg)
     cur = conn.cursor()
 
-    # --- dim_movie ---
+    # 6. Load dữ liệu vào dim_movie
     cur.execute("SELECT movie_key, movie_name FROM dim_movie")
     existing = {name: key for key, name in cur.fetchall()}
 
@@ -60,7 +64,7 @@ def run_warehouse_load():
         existing[m] = cur.lastrowid
     logger.info(f"dim_movie updated, total movies now: {len(existing)}")
 
-    # --- dim_date ---
+    # 7. Load dữ liệu vào dim_date
     cur.execute("SELECT date_key FROM dim_date")
     existing_dates = set([r[0] for r in cur.fetchall()])
 
@@ -87,7 +91,7 @@ def run_warehouse_load():
 
         fact_rows.append((movie_key, date_key, revenue, tickets, showtimes, datetime.now()))
 
-    # --- fact_revenue ---
+    # 8. Load dữ liệu vào fact_revenue
     if fact_rows:
         cur.executemany("""
             INSERT INTO fact_revenue (movie_key, date_key, revenue_vnd, tickets_sold, showtimes, load_date)
@@ -99,7 +103,7 @@ def run_warehouse_load():
     cur.close()
     conn.close()
 
-    # --- Push log vào db_control ---
+    # 9. Đẩy log vào db_control
     try:
         push_log_file_to_db(log_file, get_db_config("control"))
     except Exception:
