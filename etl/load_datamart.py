@@ -5,7 +5,7 @@ import logging
 import mysql.connector
 from datetime import datetime
 
-# Thiết lập project root
+# 1. Thiết lập đường dẫn project root
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.insert(0, project_root)
 
@@ -13,12 +13,13 @@ from utils.db_connection import get_db_config, get_etl_config_from_db
 from utils.log_to_db import push_log_file_to_db
 from etl.aggregate_data import aggregate_for_datamart
 
-# --- Lấy thư mục log từ config DB Control ---
+# 2. Lấy đường dẫn log từ config DB Control ---
 log_dir = get_etl_config_from_db("datamart_log_path") or "logs/datamart"
 os.makedirs(log_dir, exist_ok=True)
+# 3. Tạo file log
 log_file = os.path.join(log_dir, f"load_datamart_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log")
 
-# Logger setup
+# 4. Thiết lập logger
 logger = logging.getLogger("load_datamart")
 logger.setLevel(logging.INFO)
 logger.handlers = []  # Xóa handler cũ
@@ -32,7 +33,7 @@ logger.addHandler(logging.StreamHandler())  # Console
 def load_to_datamart():
     logger.info("Start load_to_datamart")
     
-    # --- Lấy dữ liệu aggregate từ warehouse ---
+    # 5. Lấy dữ liệu tổng hợp 
     aggregate_path = get_etl_config_from_db("aggregate_data_path") or "data/aggregate"
     daily_df, top_df = aggregate_for_datamart()
     
@@ -40,11 +41,13 @@ def load_to_datamart():
         logger.warning("No aggregate data to load")
         return
 
+    # 6. Kết nối đến database data mart
     dm_cfg = get_db_config("datamart")
     conn = mysql.connector.connect(**dm_cfg)
     cur = conn.cursor()
 
-    # --- Load dm_daily_revenue ---
+    # 7. Chuẩn hóa dữ liệu để load
+    # 8. Load vào bảng dm_daily_revenue
     data_daily = daily_df[['movie_name', 'full_date', 'revenue_vnd', 'tickets_sold', 'showtimes']].values.tolist()
     if data_daily:
         cur.executemany("""
@@ -56,7 +59,8 @@ def load_to_datamart():
     else:
         logger.warning("No rows to insert into dm_daily_revenue")
 
-    # --- Load dm_top_movies ---
+    # 7. Chuẩn hóa dữ liệu để load
+    # 9. Load vào bảng dm_top_movies
     data_top = top_df[['movie_name', 'revenue_vnd', 'tickets_sold', 'showtimes', 'ranking']].values.tolist()
     if data_top:
         cur.executemany("""
@@ -68,10 +72,11 @@ def load_to_datamart():
     else:
         logger.warning("No rows to insert into dm_top_movies")
 
+    # 10. Đóng cursor và connection
     cur.close()
     conn.close()
 
-    # --- Flush log và push vào db_control ---
+    # 11. Đẩy log vào db_control
     try:
         for handler in logger.handlers:
             if isinstance(handler, logging.FileHandler):

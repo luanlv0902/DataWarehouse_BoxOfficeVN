@@ -11,7 +11,7 @@ sys.path.insert(0, project_root)
 from utils.db_connection import get_db_config, get_etl_config_from_db
 from utils.log_to_db import push_log_file_to_db
 
-# Logging
+# 1. Khởi tạo logging động
 log_dir = "logs/aggregate"
 os.makedirs(log_dir, exist_ok=True)
 log_file = f"{log_dir}/aggregate_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
@@ -22,10 +22,10 @@ logging.getLogger().addHandler(logging.StreamHandler())
 def aggregate_for_datamart():
     logging.info("Start aggregate_for_datamart")
     
-    # Connect to warehouse
+    # 2. Kết nối data warehouse
     cfg = get_db_config("warehouse")
     conn = mysql.connector.connect(**cfg)
-    
+    # 3. Truy vấn dữ liệu từ các bảng dim + fact
     sql = """
     SELECT 
         f.revenue_id,
@@ -38,6 +38,7 @@ def aggregate_for_datamart():
     JOIN dim_movie m ON f.movie_key = m.movie_key
     JOIN dim_date d ON f.date_key = d.date_key
     """
+    #4. Đưa kết quả vào dataFrame Pandas
     df = pd.read_sql(sql, conn)
     conn.close()
     
@@ -45,25 +46,28 @@ def aggregate_for_datamart():
         logging.warning("No data found in fact_revenue")
         return None, None
     
-    # 1️⃣ Aggregate daily revenue
+    # 5. Tổng hợp dữ liệu daily revenue
+    # Aggregate daily revenue
     daily_df = df.groupby(['movie_name', 'full_date'], as_index=False).agg({
         'revenue_vnd': 'sum',
         'tickets_sold': 'sum',
         'showtimes': 'sum'
     })
     
-    # 2️⃣ Aggregate top movies
+    # 6. Tổng hợp danh sách top movies
+    # Aggregate top movies
     top_df = df.groupby(['movie_name'], as_index=False).agg({
         'revenue_vnd': 'sum',
         'tickets_sold': 'sum',
         'showtimes': 'sum'
-    }).sort_values(by='revenue_vnd', ascending=False).reset_index(drop=True)
+    }).sort_values(by='revenue_vnd', ascending=False).reset_index(drop=True) # 7. Sắp xếp doanh thu
     top_df['ranking'] = top_df.index + 1
     
-    # --- Lấy thư mục lưu trữ aggregate từ DB ---
+    # 8. Lấy đường dẫn aggregate động từ db_control
     aggregate_dir = get_etl_config_from_db("aggregate_data_path") or "data/aggregate"
     os.makedirs(aggregate_dir, exist_ok=True)
     
+    # 9. Sinh output CSV cho data mart
     today_str = datetime.today().strftime("%d%m%Y")
     daily_path = os.path.join(aggregate_dir, f"dm_daily_revenue_{today_str}.csv")
     top_path = os.path.join(aggregate_dir, f"dm_top_movies_{today_str}.csv")
@@ -74,7 +78,7 @@ def aggregate_for_datamart():
     logging.info(f"Daily revenue CSV saved: {daily_path}")
     logging.info(f"Top movies CSV saved: {top_path}")
     
-    # Push logs vào db_control
+    # 10. Đẩy log vào db_control
     try:
         push_log_file_to_db(log_file, get_db_config("control"))
     except Exception:

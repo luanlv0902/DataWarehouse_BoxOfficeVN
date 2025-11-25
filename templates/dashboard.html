@@ -1,84 +1,242 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <meta charset="UTF-8">
     <title>Daily Revenue Dashboard</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+
     <style>
-        body { padding: 20px; font-family: sans-serif; }
-        table { border-collapse: collapse; width: 100%; margin-top: 20px; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
-        th { background-color: #f2f2f2; }
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+            background: #f5f7fa;
+        }
+
+        .header {
+            background: linear-gradient(90deg, #4b79ff, #2b59ff);
+            padding: 25px 40px;
+            color: white;
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+        }
+
+        .container {
+            padding: 30px 40px;
+        }
+
+        /* Buttons */
+        .menu-btn {
+            padding: 12px 20px;
+            background: #95a5a6;
+            color: black;
+            border: none;
+            border-radius: 8px;
+            margin-right: 10px;
+            cursor: pointer;
+            font-size: 15px;
+        }
+
+        .menu-btn:hover {
+            background: #3346dd;
+            color: #ffffff;
+        }
+
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-top: 20px;
+            box-shadow: 0 4px 18px rgba(0, 0, 0, 0.08);
+            display: none;
+            /* ẩn mặc định */
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        thead {
+            background: #4457ff;
+            color: white;
+        }
+
+        th,
+        td {
+            padding: 12px;
+            text-align: center;
+            border-bottom: 1px solid #eee;
+        }
+
+        tbody tr:hover {
+            background: #f0f4ff;
+        }
+
+        .menu-btn.active {
+            background: #4457ff;
+            color: #ffffff;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
     </style>
 </head>
-<body>
-    <h1>Dữ liệu từ Data Mart</h1>
-    <h2>📊 Thống kê doanh thu theo ngày</h2>
-    <canvas id="revenueChart"></canvas>
 
-    <h2>🏆 Top Movies</h2>
-    <table id="topMoviesTable">
-        <thead>
-            <tr>
-                <th>Rank</th>
-                <th>Movie</th>
-                <th>Revenue (VND)</th>
-                <th>Tickets Sold</th>
-                <th>Showtimes</th>
-            </tr>
-        </thead>
-        <tbody></tbody>
-    </table>
+<body>
+
+    <div class="header">
+        BoxOffice Dashboard – Data Mart Analytics
+    </div>
+
+    <div class="container">
+
+        <!-- BUTTONS -->
+        <button id="btnRevenue" class="menu-btn" onclick="showRevenue()">Doanh thu ngày</button>
+        <button id="btnTopMovies" class="menu-btn" onclick="showTopMovies()">Xếp hạng phim</button>
+
+
+        <!-- CARD: DAILY REVENUE -->
+        <div id="revenueCard" class="card">
+            <h2>Thống kê doanh thu theo ngày</h2>
+            <canvas id="revenueChart"></canvas>
+        </div>
+
+        <!-- CARD: TOP MOVIES -->
+        <div id="topMoviesCard" class="card">
+            <h2>Top Movies</h2>
+            <table id="topMoviesTable">
+                <thead>
+                    <tr>
+                        <th>Rank</th>
+                        <th>Movie</th>
+                        <th>Revenue (VND)</th>
+                        <th>Tickets Sold</th>
+                        <th>Showtimes</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
 
     <script>
-    // --- Daily Revenue Chart ---
-    fetch("/api/dm_daily_revenue")
-        .then(res => res.json())
-        .then(data => {
-            const labels = data.map(r => r.movie + " – " + r.date);
-            const revenues = data.map(r => r.revenue);
+        let chartLoaded = false;
+        let tableLoaded = false;
 
-            const ctx = document.getElementById("revenueChart");
-            new Chart(ctx, {
-                type: "line",
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: "Doanh thu (VND)",
-                        data: revenues,
-                        borderColor: "blue",
-                        backgroundColor: "rgba(0, 0, 255, 0.1)",
-                        fill: true
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    scales: {
-                        y: {
-                            beginAtZero: true
+        // Ẩn tất cả card
+        function hideAll() {
+            document.getElementById("revenueCard").style.display = "none";
+            document.getElementById("topMoviesCard").style.display = "none";
+        }
+
+        // Set nút active
+        function setActive(buttonName) {
+            const buttons = document.querySelectorAll(".menu-btn");
+            buttons.forEach(btn => btn.classList.remove("active"));
+            document.getElementById(buttonName).classList.add("active");
+        }
+
+        /* ---------------- SHOW REVENUE ---------------- */
+        function showRevenue() {
+            hideAll();
+            document.getElementById("revenueCard").style.display = "block";
+            setActive("btnRevenue");
+
+            if (!chartLoaded) loadRevenueChart();
+        }
+
+        /* ---------------- SHOW TOP MOVIES ---------------- */
+        function showTopMovies() {
+            hideAll();
+            document.getElementById("topMoviesCard").style.display = "block";
+            setActive("btnTopMovies");
+
+            if (!tableLoaded) loadTopMovies();
+        }
+
+        /* ---------------- LOAD CHART ---------------- */
+        function loadRevenueChart() {
+            fetch("/api/dm_daily_revenue")
+                .then(res => res.json())
+                .then(data => {
+                    const labels = data.map(r => r.movie + " – " + r.date);
+                    const revenues = data.map(r => r.revenue);
+
+                    const minRevenue = Math.min(...revenues);
+                    const maxRevenue = Math.max(...revenues);
+
+                    const ctx = document.getElementById("revenueChart");
+
+                    new Chart(ctx, {
+                        type: "line",
+                        data: {
+                            labels: labels,
+                            datasets: [{
+                                label: "Doanh thu (VND)",
+                                data: revenues,
+                                borderColor: "#4457ff",
+                                backgroundColor: "rgba(68,87,255,0.15)",
+                                borderWidth: 2,
+                                tension: 0.3,
+                                fill: true
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            scales: {
+                                y: {
+                                    beginAtZero: false,
+                                    suggestedMin: minRevenue * 0.9,
+                                    suggestedMax: maxRevenue * 1.1,
+                                    ticks: {
+                                        stepSize: 500000000, // Mỗi tầng 500 triệu
+                                        callback: value => value.toLocaleString()
+                                    }
+                                }
+                            }
                         }
-                    }
-                }
-            });
-        });
+                    });
 
-    // --- Top Movies Table ---
-    fetch("/api/dm_top_movies")
-        .then(res => res.json())
-        .then(data => {
-            const tbody = document.querySelector("#topMoviesTable tbody");
-            data.forEach(r => {
-                const tr = document.createElement("tr");
-                tr.innerHTML = `
+                    chartLoaded = true;
+                });
+        }
+
+        /* ---------------- LOAD TABLE ---------------- */
+        function loadTopMovies() {
+            fetch("/api/dm_top_movies")
+                .then(res => res.json())
+                .then(data => {
+                    const tbody = document.querySelector("#topMoviesTable tbody");
+
+                    data.forEach(r => {
+                        const tr = document.createElement("tr");
+                        tr.innerHTML = `
                     <td>${r.rank}</td>
                     <td>${r.movie}</td>
                     <td>${r.revenue.toLocaleString()}</td>
                     <td>${r.tickets.toLocaleString()}</td>
                     <td>${r.showtimes.toLocaleString()}</td>
                 `;
-                tbody.appendChild(tr);
-            });
-        });
+                        tbody.appendChild(tr);
+                    });
+
+                    tableLoaded = true;
+                });
+        }
+
+        window.onload = () => {
+            showRevenue();
+        };
+
     </script>
+
 </body>
+
 </html>
