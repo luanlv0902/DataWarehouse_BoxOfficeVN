@@ -1,0 +1,4 @@
+2025-11-24 19:49:02,024 - INFO - Start load_to_datamart
+2025-11-24 19:49:02,084 - INFO - Inserted 113 rows into dm_daily_revenue
+2025-11-24 19:49:02,094 - INFO - Inserted 43 rows into dm_top_movies
+2025-11-24 19:49:02,117 - INFO - Pushed log to db_control successfully

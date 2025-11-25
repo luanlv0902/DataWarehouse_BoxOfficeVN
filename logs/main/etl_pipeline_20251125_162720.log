@@ -1,0 +1,3 @@
+2025-11-25 16:27:20,390 - INFO - Starting full ETL pipeline
+2025-11-25 16:27:20,390 - INFO - Step 1: Extract data
+2025-11-25 16:27:36,053 - INFO - Pushed main ETL log to db_control successfully

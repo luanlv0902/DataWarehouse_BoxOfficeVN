@@ -1,0 +1,9 @@
+2025-11-25 16:27:20,352 - INFO - package: mysql.connector.plugins
+2025-11-25 16:27:20,352 - INFO - plugin_name: mysql_native_password
+2025-11-25 16:27:20,353 - INFO - AUTHENTICATION_PLUGIN_CLASS: MySQLNativePasswordAuthPlugin
+2025-11-25 16:27:20,390 - INFO - Starting full ETL pipeline
+2025-11-25 16:27:20,390 - INFO - Step 1: Extract data
+2025-11-25 16:27:20,390 - INFO - Start extract
+2025-11-25 16:27:23,813 - INFO - Đang lấy dữ liệu từ URL nguồn: https://boxofficevietnam.com/
+2025-11-25 16:27:36,030 - ERROR - No table found on page
+2025-11-25 16:27:36,053 - INFO - Pushed main ETL log to db_control successfully

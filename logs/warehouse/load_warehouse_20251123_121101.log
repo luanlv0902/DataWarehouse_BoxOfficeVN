@@ -1,0 +1,3 @@
+2025-11-23 12:11:13,812 - INFO - Start load_warehouse
+2025-11-23 12:11:13,836 - INFO - dim_movie updated, total movies now: 40
+2025-11-23 12:11:13,856 - INFO - Inserted 36 rows into fact_revenue

@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Daily Revenue Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { padding: 20px; font-family: sans-serif; }
+        table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+        th { background-color: #f2f2f2; }
+    </style>
+</head>
+<body>
+    <h1>Dữ liệu từ Data Mart</h1>
+    <h2>📊 Thống kê doanh thu theo ngày</h2>
+    <canvas id="revenueChart"></canvas>
+
+    <h2>🏆 Top Movies</h2>
+    <table id="topMoviesTable">
+        <thead>
+            <tr>
+                <th>Rank</th>
+                <th>Movie</th>
+                <th>Revenue (VND)</th>
+                <th>Tickets Sold</th>
+                <th>Showtimes</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+    <script>
+    // --- Daily Revenue Chart ---
+    fetch("/api/dm_daily_revenue")
+        .then(res => res.json())
+        .then(data => {
+            const labels = data.map(r => r.movie + " – " + r.date);
+            const revenues = data.map(r => r.revenue);
+
+            const ctx = document.getElementById("revenueChart");
+            new Chart(ctx, {
+                type: "line",
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: "Doanh thu (VND)",
+                        data: revenues,
+                        borderColor: "blue",
+                        backgroundColor: "rgba(0, 0, 255, 0.1)",
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        });
+
+    // --- Top Movies Table ---
+    fetch("/api/dm_top_movies")
+        .then(res => res.json())
+        .then(data => {
+            const tbody = document.querySelector("#topMoviesTable tbody");
+            data.forEach(r => {
+                const tr = document.createElement("tr");
+                tr.innerHTML = `
+                    <td>${r.rank}</td>
+                    <td>${r.movie}</td>
+                    <td>${r.revenue.toLocaleString()}</td>
+                    <td>${r.tickets.toLocaleString()}</td>
+                    <td>${r.showtimes.toLocaleString()}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        });
+    </script>
+</body>
+</html>
